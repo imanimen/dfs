@@ -6,6 +6,24 @@ import (
 	"sync"
 )
 
+// TCPPeer represents the remote node over tcp established connection.
+type TCPPeer struct {
+	// conn is the underlying connection of the peer
+	conn	net.Conn
+	// if we dial and retrieve a connection 	-> outbound == true
+	// if we accept and retrieve a connection 	-> outbound == false
+	outbound	bool
+}
+
+// NewTCPPeer creates a new TCPPeer instance from the provided net.Conn and outbound flag.
+// The TCPPeer represents a peer connected over a TCP transport.
+func NewTCPPeer(conn net.Conn, outbound bool) *TCPPeer {
+	return &TCPPeer{
+		conn:     conn,
+		outbound: outbound,
+	}
+}
+
 type TCPTransport struct {
 	ListenAddress  string
 	Listener 	   net.Listener
@@ -14,6 +32,7 @@ type TCPTransport struct {
 	peers 		   map[net.Addr]Peer
 
 }
+
 
 // NewTCPTransport creates a new TCPTransport instance with the provided listen address.
 // The TCPTransport is responsible for managing the TCP connection for the p2p network.
@@ -50,5 +69,7 @@ func (t *TCPTransport) startAcceptLoop() {
 
 
 func (t *TCPTransport) handleConn(conn net.Conn) {
-	fmt.Printf("dfs: new incoming connection %+v\n", conn)
+	// create a new tcp peer
+	peer := NewTCPPeer(conn, true)
+	fmt.Printf("dfs: new incoming connection %+v\n", peer)
 }
