@@ -99,6 +99,8 @@ func (t *TCPTransport) handleConn(conn net.Conn) {
 			fmt.Printf("dfs: TCP read error: %s\n", err)
 			continue
 		}
+
+		fmt.Printf("dfs: message%v\n", msg)
 	}
 
 }
