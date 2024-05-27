@@ -3,7 +3,6 @@ package p2p
 import (
 	"fmt"
 	"net"
-	"sync"
 )
 
 // TCPPeer represents the remote node over tcp established connection.
@@ -24,17 +23,22 @@ func NewTCPPeer(conn net.Conn, outbound bool) *TCPPeer {
 	}
 }
 
+// Close implements the Peer interface
+func (p *TCPPeer) Close() error {
+	return p.conn.Close()
+}
+
 type TCPTransportOptions struct {
 	ListenAddr string
 	HandShakeFunc HandShakeFunc
 	Decoder    	  Decoder	
+	OnPeer		  func(Peer) error
 }
 
 type TCPTransport struct {
 	TCPTransportOptions
 	Listener       net.Listener
-	mu 			   sync.RWMutex
-	peers 		   map[net.Addr]Peer
+	rpcCh			   chan RPC
 
 }
 
@@ -44,7 +48,14 @@ type TCPTransport struct {
 func NewTCPTransport(opts TCPTransportOptions) *TCPTransport {
 	return &TCPTransport{
 		TCPTransportOptions: opts,
+		rpcCh: make(chan RPC),
 	}
+}
+
+// Consume implements the Transport interface, which will return read-only channel
+// for reading the incoming messages received from other peer in the network
+func (t *TCPTransport) Consume() <-chan RPC {
+	return t.rpcCh
 }
 
 // ListenAndAccept starts listening on the configured address and accepts incoming TCP connections.
@@ -81,26 +92,42 @@ func (t *TCPTransport) startAcceptLoop() {
 
 
 func (t *TCPTransport) handleConn(conn net.Conn) {
+
+	var err error
+	
+	defer func() {
+		fmt.Printf("dfs: dropping peer connection: %s", err)
+		conn.Close()
+	}()
+
 	// create a new tcp peer
 	peer := NewTCPPeer(conn, true)
 
-	if err := t.HandShakeFunc(peer); err != nil {
-		conn.Close()
-		fmt.Printf("dfs: handshake error: %s\n", err)
+	// HandShakeFunc is called to perform the handshake with the given peer.
+	// If the handshake fails, the function returns an error.
+	if err = t.HandShakeFunc(peer); err != nil {
 		return
 	}
 
+	// OnPeer is called when a new peer is connected. If an error is returned,
+	// the connection will be closed.
+	if t.OnPeer != nil {
+		if err = t.OnPeer(peer); err != nil {
+			return
+		}
+	}
 
 	// Read Loop
-	rpc := &RPC{}
+	rpc := RPC{}
 	for {
-		if err := t.Decoder.Decode(conn, rpc); err != nil {
+		if err := t.Decoder.Decode(conn, &rpc); err != nil {
 			fmt.Printf("dfs: TCP read error: %s\n", err)
 			continue
 		}
 
 		rpc.From = conn.RemoteAddr()
-		fmt.Printf("dfs: message %+v\n", rpc)
+		// fmt.Printf("dfs: message %+v\n", rpc)
+		t.rpcCh <- rpc
 	}
 
 }
