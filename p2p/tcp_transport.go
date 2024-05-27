@@ -93,20 +93,15 @@ func (t *TCPTransport) handleConn(conn net.Conn) {
 
 
 	// Read Loop
-	// msg := &Temp{}
-	buf := make([]byte, 2000)
+	msg := &Message{}
 	for {
-		// if err := t.Decoder.Decode(conn, msg); err != nil {
-		// 	fmt.Printf("dfs: TCP read error: %s\n", err)
-		// 	continue
-		// }
-
-		n, err := conn.Read(buf); 
-		if err != nil {
+		if err := t.Decoder.Decode(conn, msg); err != nil {
 			fmt.Printf("dfs: TCP read error: %s\n", err)
+			continue
 		}
 
-		fmt.Printf("dfs: message%v\n", buf[:n])
+
+		fmt.Printf("dfs: message %+v\n", msg)
 	}
 
 }
