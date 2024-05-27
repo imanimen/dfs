@@ -7,12 +7,18 @@ import (
 	"github.com/imanimen/dfs/p2p"
 )
 
+func OnPeer(p2p.Peer) error {
+	fmt.Println("dfs: doing some logic with the peer outside of TCPTransport")
+	return nil
+}
+
+
 func main() {
 	tcpOpts := p2p.TCPTransportOptions{
 		ListenAddr: ":3000",
 		HandShakeFunc: p2p.NOPHandshakeFunc,
 		Decoder: p2p.DefaultDecoder{},
-		OnPeer: func(p2p.Peer) error {return fmt.Errorf("dfs: failed the OnPeer func")},
+		OnPeer: OnPeer,
 	}
 	tr := p2p.NewTCPTransport(tcpOpts)
 
