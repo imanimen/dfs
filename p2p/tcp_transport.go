@@ -120,13 +120,15 @@ func (t *TCPTransport) handleConn(conn net.Conn) {
 	// Read Loop
 	rpc := RPC{}
 	for {
-		if err := t.Decoder.Decode(conn, &rpc); err != nil {
+		err := t.Decoder.Decode(conn, &rpc);
+		if err == net.ErrClosed {
+			return
+		}
+		if err != nil {
 			fmt.Printf("dfs: TCP read error: %s\n", err)
 			continue
 		}
-
 		rpc.From = conn.RemoteAddr()
-		// fmt.Printf("dfs: message %+v\n", rpc)
 		t.rpcCh <- rpc
 	}
 

@@ -7,8 +7,9 @@ import (
 	"github.com/imanimen/dfs/p2p"
 )
 
-func OnPeer(p2p.Peer) error {
-	fmt.Println("dfs: doing some logic with the peer outside of TCPTransport")
+func OnPeer(peer p2p.Peer) error {
+	// fmt.Println("dfs: doing some logic with the peer outside of TCPTransport")
+	peer.Close() // close the peer connection and enters the loop <- FIX #4 pr
 	return nil
 }
 
