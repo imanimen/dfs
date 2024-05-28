@@ -1,9 +1,7 @@
 # DFS (Distributed File Storage)
-- This is a personal project
-- Daily Commit is required
-- Learn & Grow
+- TCP, gRPC, 
 
-# Goals
+# Goal
 - Hash File
 - File Versioning
 - File Encryption
