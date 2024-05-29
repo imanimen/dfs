@@ -1,6 +1,8 @@
 package main
 
 import (
+	"bytes"
+	"crypto/md5"
 	"crypto/sha1"
 	"encoding/hex"
 	"io"
@@ -51,25 +53,31 @@ func NewStore(opts StoreOpts) *Store {
 
 func (s Store) writeStream(key string, r io.Reader) error {
 	pathName := s.PathTransformFunc(key)
-
 	if err := os.MkdirAll(pathName, os.ModePerm); err != nil {
-		return err
+	  return err
 	}
-
-	fileName := "somefilename"
-	pathAndFileName := pathName + "/" + fileName
-
+  
+	data, err := io.ReadAll(r)
+	if err != nil {
+	  return err
+	}
+  
+	filenameBytes := md5.Sum(data)
+	filename := hex.EncodeToString(filenameBytes[:])
+	pathAndFileName := pathName + "/" + filename
+  
 	f, err := os.Create(pathAndFileName);
 	if err != nil {
-		return nil
+	  return err
 	}
-	n, err := io.Copy(f, r)
+  
+	n, err := io.Copy(f, bytes.NewReader(data)) 
 
 	if err != nil {
-		return err
+	  return err
 	}
-
+  
 	log.Printf("dfs: wrote (%d) bytes to disk %s\n", n, pathAndFileName)
-
+  
 	return nil
-}
+  }
