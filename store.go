@@ -2,9 +2,9 @@ package main
 
 import (
 	"bytes"
-	"crypto/md5"
 	"crypto/sha1"
 	"encoding/hex"
+	"fmt"
 	"io"
 	"log"
 	"os"
@@ -16,7 +16,7 @@ import (
 // 5-character segments and joining them with forward slashes.
 // This function is used to generate a file path for storing data in a content-addressable
 // storage (CAS) system, where the path is derived from the content of the data being stored.
-func CASPathTransformFunc(key string) string {
+func CASPathTransformFunc(key string) PathKey {
 	hash := sha1.Sum([]byte(key))
 	hashStr := hex.EncodeToString(hash[:])
 	blockSize := 5
@@ -28,10 +28,23 @@ func CASPathTransformFunc(key string) string {
 		from, to := i*blockSize, (i+1)*blockSize
 		paths[i] = hashStr[from:to]
 	}
-	return strings.Join(paths, "/")
+	return PathKey{
+		PathName: strings.Join(paths, "/"),
+		Original:hashStr,
+	}
 }
 
-type PathTransformFunc func(string) string
+type PathTransformFunc func(string) PathKey
+
+
+type PathKey struct {
+	PathName 	string
+	Original	string
+}
+
+func (p PathKey) Filename() string {
+	return fmt.Sprintf("%s/%s/", p.PathName, p.Original)
+}
 
 type StoreOpts struct {
 	PathTransformFunc PathTransformFunc
@@ -52,8 +65,8 @@ func NewStore(opts StoreOpts) *Store {
 }
 
 func (s Store) writeStream(key string, r io.Reader) error {
-	pathName := s.PathTransformFunc(key)
-	if err := os.MkdirAll(pathName, os.ModePerm); err != nil {
+	pathKey := s.PathTransformFunc(key)
+	if err := os.MkdirAll(pathKey.PathName, os.ModePerm); err != nil {
 	  return err
 	}
   
@@ -61,10 +74,8 @@ func (s Store) writeStream(key string, r io.Reader) error {
 	if err != nil {
 	  return err
 	}
-  
-	filenameBytes := md5.Sum(data)
-	filename := hex.EncodeToString(filenameBytes[:])
-	pathAndFileName := pathName + "/" + filename
+
+	pathAndFileName := pathKey.Filename()
   
 	f, err := os.Create(pathAndFileName);
 	if err != nil {
