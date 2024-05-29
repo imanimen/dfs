@@ -7,10 +7,15 @@ import (
 
 func TestPathTransformFunc(t *testing.T) {
 	key := "mybestpricture"
-	pathName := CASPathTransformFunc(key)
-	exptPathName := "8d28b/f64ba/39cf9/27180/490ed/86827/d71ae/b3526"
-	if pathName != exptPathName {
-		t.Errorf("dfs: expected pathName to be %s, but got %s", exptPathName, pathName)
+	pathKey := CASPathTransformFunc(key)
+	expectedOriginalName := "35e11881d4c98f52c39b5e17e98d0322beda8feb78a03b0d8181da4b6d9c208fdd542c81"
+	exptPathName := "35e11/881d4/c98f5/2c39b/5e17e/98d03/22bed/a8feb/78a03b0d8181da4b6d9c208fdd542c81"
+	if pathKey.PathName != exptPathName {
+		t.Errorf("dfs: expected pathName to be %s, but got %s", pathKey.PathName, exptPathName)
+	}
+
+	if pathKey.PathName != exptPathName {
+		t.Errorf("dfs: expected pathName to be %s, but got %s", pathKey.PathName, expectedOriginalName)
 	}
 
 }
