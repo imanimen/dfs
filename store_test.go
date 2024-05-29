@@ -6,18 +6,16 @@ import (
 )
 
 func TestPathTransformFunc(t *testing.T) {
-	key := "mybestpricture"
+	key := "momsbestpicture"
 	pathKey := CASPathTransformFunc(key)
-	expectedOriginalName := "35e11881d4c98f52c39b5e17e98d0322beda8feb78a03b0d8181da4b6d9c208fdd542c81"
-	exptPathName := "35e11/881d4/c98f5/2c39b/5e17e/98d03/22bed/a8feb/78a03b0d8181da4b6d9c208fdd542c81"
-	if pathKey.PathName != exptPathName {
-		t.Errorf("dfs: expected pathName to be %s, but got %s", pathKey.PathName, exptPathName)
+	expectedOriginalKey := "6804429f74181a63c50c3d81d733a12f14a353ff"
+	expectedPathName := "68044/29f74/181a6/3c50c/3d81d/733a1/2f14a/353ff"
+	if pathKey.PathName != expectedPathName {
+		t.Errorf("have %s want %s", pathKey.PathName, expectedPathName)
 	}
-
-	if pathKey.PathName != exptPathName {
-		t.Errorf("dfs: expected pathName to be %s, but got %s", pathKey.PathName, expectedOriginalName)
+	if pathKey.FileName != expectedPathName {
+		t.Errorf("have %s want %s", pathKey.FileName, expectedOriginalKey)
 	}
-
 }
 func TestStore(t *testing.T) {
 	opts := StoreOpts{
@@ -25,9 +23,8 @@ func TestStore(t *testing.T) {
 	}
 	s := NewStore(opts)
 
-	data := bytes.NewReader([]byte("some jpg byte"))
-	if err := s.writeStream("mySpecialPicture", data); err != nil {
+	data := bytes.NewReader([]byte("some jpg bytes"))
+	if err := s.writeStream("momsbestpicture", data); err != nil {
 		t.Error(err)
 	}
-	
 }
