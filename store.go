@@ -47,11 +47,11 @@ type PathKey struct {
 }
 
 func (p PathKey) FirstPathName() string {
-	paths := strings.Split(p.PathName, "/")[0]
+	paths := strings.Split(p.PathName, "/")
 	if len(paths) == 0 {
 		return ""
 	}
-	return paths
+	return paths[0]
 }
 
 func (p PathKey) FullPath() string {
@@ -87,7 +87,7 @@ func (s *Store) Delete(key string) error {
 	defer func() {
 		log.Printf("dfs: deleted [%s]", pathKey.FileName)
 	}()
-	return os.RemoveAll(strings.Trim(pathKey.FirstPathName(), "/"))
+	return os.RemoveAll(pathKey.FirstPathName())
 }
 func (s *Store) Read(key string) (io.Reader, error) {
 	file, err := s.readStream(key)
