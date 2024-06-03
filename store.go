@@ -9,6 +9,7 @@ import (
 	"io"
 	"log"
 	"os"
+	"path/filepath"
 
 	// "log"
 	// "os"
@@ -34,16 +35,23 @@ func CASPathTransformFunc(key string) PathKey {
 	}
 	return PathKey{
 		PathName: strings.Join(paths, "/"),
-		FileName:hashStr,
+		FileName: hashStr,
 	}
 }
 
 type PathTransformFunc func(string) PathKey
 
-
 type PathKey struct {
-	PathName 	string
-	FileName	string
+	PathName string
+	FileName string
+}
+
+func (p PathKey) FirstPathName() string {
+	paths := strings.Split(p.PathName, "/")[0]
+	if len(paths) == 0 {
+		return ""
+	}
+	return paths
 }
 
 func (p PathKey) FullPath() string {
@@ -68,6 +76,19 @@ func NewStore(opts StoreOpts) *Store {
 	}
 }
 
+func (s *Store) Has(key string) bool {
+	pathKey := s.PathTransformFunc(key)
+	_, err := os.Stat(pathKey.FullPath())
+	return err == nil
+}
+
+func (s *Store) Delete(key string) error {
+	pathKey := s.PathTransformFunc(key)
+	defer func() {
+		log.Printf("dfs: deleted [%s]", pathKey.FileName)
+	}()
+	return os.RemoveAll(strings.Trim(pathKey.FirstPathName(), "/"))
+}
 func (s *Store) Read(key string) (io.Reader, error) {
 	file, err := s.readStream(key)
 	if err != nil {
@@ -79,35 +100,44 @@ func (s *Store) Read(key string) (io.Reader, error) {
 	return buf, err
 }
 
-func (s *Store) readStream(key string)  (io.ReadCloser, error) {
+func (s *Store) readStream(key string) (io.ReadCloser, error) {
 	pathKey := s.PathTransformFunc(key)
 	return os.Open(pathKey.FullPath())
 }
 
-func (s *Store) writeStream(key string, r io.Reader) error {
+func (s *Store) WriteStream(key string, r io.Reader) error {
+	// Get the project root directory
+	projectRoot, err := os.Getwd()
+	if err != nil {
+		return err
+	}
+
 	pathKey := s.PathTransformFunc(key)
-	if err := os.MkdirAll(pathKey.PathName, os.ModePerm); err != nil {
-	  return err
-	}
-  
-	data, err := io.ReadAll(r)
-	if err != nil {
-	  return err
+	fullPath := filepath.Join(projectRoot, pathKey.FullPath())
+
+	// Check if the directory structure already exists
+	_, err = os.Stat(filepath.Dir(fullPath))
+	if os.IsNotExist(err) {
+		// Create the directory structure
+		if err := os.MkdirAll(filepath.Dir(fullPath), os.ModePerm); err != nil {
+			return err
+		}
+	} else if err != nil {
+		return err
 	}
 
-	pathAndFileName := pathKey.FullPath()
-  
-	f, err := os.Create(pathAndFileName);
+	f, err := os.Create(fullPath)
 	if err != nil {
-	  return err
+		return err
 	}
-  
-	n, err := io.Copy(f, bytes.NewReader(data)) 
+	defer f.Close()
 
+	n, err := io.Copy(f, r)
 	if err != nil {
-	  return err
+		return err
 	}
-  
-	log.Printf("dfs: wrote (%d) bytes to disk %s\n", n, pathAndFileName)
-  
-	return nil}
+
+	log.Printf("dfs: wrote (%d) bytes to disk %s\n", n, fullPath)
+
+	return nil
+}
