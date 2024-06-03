@@ -1,5 +1,5 @@
 # DFS (Distributed File Storage)
-- TCP, gRPC, 
+- TCP, RPC
 
 # Goal
 - Hash File
@@ -7,5 +7,3 @@
 - File Encryption
 - File Decryption
 - Cache & Index System
-
-# Dir
