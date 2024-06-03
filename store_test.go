@@ -34,7 +34,6 @@ func TestStoreDeleteKey(t *testing.T) {
 		t.Error(err)
 	}
 
-	// fmt.Println(k)
 
 	err := s.Delete(key)
 	if err != nil {
@@ -63,5 +62,6 @@ func TestStore(t *testing.T) {
 	if string(b) != string(data) {
 		t.Errorf("want %s have %s", data, b)
 	}
+	s.Delete(key)
 
 }
