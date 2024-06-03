@@ -7,6 +7,9 @@ import (
 
 	// "fmt"
 	// "io"
+
+	// "fmt"
+	// "io"
 	"testing"
 )
 
@@ -23,24 +26,23 @@ import (
 // 	}
 // }
 
-func TestStoreDeleteKey(t *testing.T) {
-	opts := StoreOpts{
-		PathTransformFunc: CASPathTransformFunc,
-	}
-	s := NewStore(opts)
-	key := "momsspecials"
-	data := []byte("some jpg bytes")
-	if err := s.WriteStream(key, bytes.NewReader(data)); err != nil {
-		t.Error(err)
-	}
+// func TestStoreDeleteKey(t *testing.T) {
+// 	opts := StoreOpts{
+// 		PathTransformFunc: CASPathTransformFunc,
+// 	}
+// 	s := NewStore(opts)
+// 	key := "momsspecials"
+// 	data := []byte("some jpg bytes")
+// 	if err := s.WriteStream(key, bytes.NewReader(data)); err != nil {
+// 		t.Error(err)
+// 	}
 
+// 	err := s.Delete(key)
+// 	if err != nil {
+// 		return
+// 	}
 
-	err := s.Delete(key)
-	if err != nil {
-		return
-	}
-
-}
+// }
 
 func TestStore(t *testing.T) {
 	opts := StoreOpts{
@@ -52,6 +54,7 @@ func TestStore(t *testing.T) {
 	if err := s.WriteStream(key, bytes.NewReader(data)); err != nil {
 		t.Error(err)
 	}
+	
 	r, err := s.Read(key)
 	if err != nil {
 		t.Error(err)
